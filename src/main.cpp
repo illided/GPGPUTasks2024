@@ -1,7 +1,11 @@
+#include "CL/cl_platform.h"
 #include <CL/cl.h>
+#include <cstddef>
+#include <iterator>
 #include <libclew/ocl_init.h>
 
 #include <iostream>
+#include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -69,22 +73,81 @@ int main() {
         // Аналогично тому, как был запрошен список идентификаторов всех платформ - так и с названием платформы, теперь, когда известна длина названия - его можно запросить:
         std::vector<unsigned char> platformName(platformNameSize, 0);
         // clGetPlatformInfo(...);
-        std::cout << "    Platform name: " << platformName.data() << std::endl;
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_NAME, platformNameSize, platformName.data(), nullptr));
+        std::cout << "\tPlatform name: " << platformName.data() << std::endl;
 
         // TODO 1.3
         // Запросите и напечатайте так же в консоль вендора данной платформы
+        size_t vendorNameSize = 0;
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, 0, nullptr, &vendorNameSize));
+        std::vector<unsigned char> vendorName(vendorNameSize, 0);
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, vendorNameSize, vendorName.data(), nullptr));
+        std::cout << "\tVendor name: " << vendorName.data() << std::endl;
 
         // TODO 2.1
         // Запросите число доступных устройств данной платформы (аналогично тому, как это было сделано для запроса числа доступных платформ - см. секцию "OpenCL Runtime" -> "Query Devices")
         cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+        std::vector<cl_device_id> devices(devicesCount);
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
 
         for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+            cl_device_id device = devices[deviceIndex];
+            std::cout << "\tDevice #" << (deviceIndex + 1) << "/" << devicesCount << std::endl;
             // TODO 2.2
             // Запросите и напечатайте в консоль:
             // - Название устройства
             // - Тип устройства (видеокарта/процессор/что-то странное)
             // - Размер памяти устройства в мегабайтах
             // - Еще пару или более свойств устройства, которые вам покажутся наиболее интересными
+
+            // Название устройства
+            size_t deviceNameSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_NAME, 0, nullptr, &deviceNameSize));
+            std::vector<unsigned char> deviceName(deviceNameSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_NAME, deviceNameSize, deviceName.data(), nullptr));
+            std::cout << "\t\tDevice name: " << deviceName.data() << std::endl;
+
+            // Тип устройства
+            cl_device_type device_type;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr));
+            std::cout << "\t\tDevice type: ";
+            switch (device_type) {
+                case CL_DEVICE_TYPE_CPU:
+                    std::cout << "CPU";
+                    break;
+                case CL_DEVICE_TYPE_GPU:
+                    std::cout << "GPU";
+                    break;
+                case CL_DEVICE_TYPE_ACCELERATOR:
+                    std::cout << "ACCELERATOR";
+                    break;
+                default:
+                    std::cout << "Unknown";
+                    break;
+            }
+            std::cout << std::endl;
+
+            // Размер памяти
+            cl_ulong memoryBytes;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &memoryBytes, nullptr));
+            std::cout << "\t\tDevice memory: " << to_string(memoryBytes >> 20) << "Mb" << std::endl; 
+
+            // Max clock frequency
+            cl_uint maxUnits;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &maxUnits, nullptr));
+            std::cout << "\t\tParallel compute units: " << to_string(maxUnits) << std::endl;
+
+            // Supports error correction
+            cl_bool supportsErrorCorrection;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_ERROR_CORRECTION_SUPPORT, sizeof(cl_bool), &supportsErrorCorrection, nullptr));
+            std::cout << "\t\tSupports error correction: ";
+            if (supportsErrorCorrection) {
+                std::cout << "true";
+            } else {
+                std::cout << "false";
+            }
+            std::cout << std::endl;
         }
     }
 
