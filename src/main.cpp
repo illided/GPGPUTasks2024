@@ -220,6 +220,7 @@ int main() {
             OCL_SAFE_CALL(
                 clWaitForEvents(1, &event)
             );
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap();// При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
@@ -265,6 +266,13 @@ int main() {
         }
     }
 
+    OCL_SAFE_CALL(clReleaseMemObject(as_gpu));
+    OCL_SAFE_CALL(clReleaseMemObject(bs_gpu));
+    OCL_SAFE_CALL(clReleaseMemObject(cs_gpu));
+
+    OCL_SAFE_CALL(clReleaseKernel(kernel));
+    OCL_SAFE_CALL(clReleaseProgram(program));
+    OCL_SAFE_CALL(clReleaseCommandQueue(commandQueue));
     OCL_SAFE_CALL(clReleaseContext(context));
 
     return 0;
