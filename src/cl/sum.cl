@@ -5,6 +5,7 @@
 #line 6
 
 #define VALUES_PER_WORKITEM 64
+#define WORKGROUP_SIZE 128
 
 __kernel void sum_global_atomic(
     __global const unsigned int* a,
@@ -68,8 +69,6 @@ __kernel void sum_local_mem(
 ) {
     const unsigned int gid = get_global_id(0);
     const unsigned int lid = get_local_id(0);
-    const unsigned int lgs = get_local_size(0);
-    const unsigned int WORKGROUP_SIZE = 128;
 
     __local unsigned int buf[WORKGROUP_SIZE];
 
@@ -81,7 +80,7 @@ __kernel void sum_local_mem(
 
     if (lid == 0) {
         unsigned int group_res = 0;
-        for (unsigned int i = 0; i < get_local_size(0); i++) {
+        for (unsigned int i = 0; i < WORKGROUP_SIZE; i++) {
             group_res += buf[i];
         }
         atomic_add(sum, group_res);
@@ -96,7 +95,6 @@ __kernel void sum_tree(
     const unsigned int gid = get_global_id(0);
     const unsigned int lid = get_local_id(0);
     const unsigned int wid = get_group_id(0);
-    const unsigned int WORKGROUP_SIZE = 128;
 
     __local unsigned int buf[WORKGROUP_SIZE];
     

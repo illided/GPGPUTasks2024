@@ -21,10 +21,6 @@ void raiseFail(const T &a, const T &b, std::string message, std::string filename
 #define EXPECT_THE_SAME(a, b, message) raiseFail(a, b, message, __FILE__, __LINE__)
 
 
-void testKernel(std::string kernelName) {
-    
-}
-
 
 int main(int argc, char **argv)
 {
@@ -117,7 +113,7 @@ int main(int argc, char **argv)
             host_sum = 0;
             sum_res.writeN(&host_sum, 1);
             kernel.exec(
-                gpu::WorkSize(workGroupSize, globalWorkSize),
+                gpu::WorkSize(workGroupSize, globalWorkSize / 64),
                 a_gpu, 
                 sum_res,
                 n
@@ -139,7 +135,7 @@ int main(int argc, char **argv)
             host_sum = 0;
             sum_res.writeN(&host_sum, 1);
             kernel.exec(
-                gpu::WorkSize(workGroupSize, globalWorkSize),
+                gpu::WorkSize(workGroupSize, globalWorkSize / 64),
                 a_gpu, 
                 sum_res,
                 n
