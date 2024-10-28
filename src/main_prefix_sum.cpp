@@ -10,10 +10,9 @@
 #include "cl/prefix_sum_cl.h"
 
 
-const int benchmarkingIters = 1;
+const int benchmarkingIters = 10;
 const int benchmarkingItersCPU = 10;
-// const unsigned int max_n = (1 << 24);
-const unsigned int max_n = 8;
+const unsigned int max_n = (1 << 24);
 
 template<typename T>
 void raiseFail(const T &a, const T &b, std::string message, std::string filename, int line)
@@ -56,16 +55,15 @@ int main(int argc, char **argv)
     context.init(device.device_id_opencl);
     context.activate();
 
+    gpu::gpu_mem_32u as_gpu, bs_gpu;
+
     ocl::Kernel prefix_sum_up(prefix_sum_kernel, prefix_sum_kernel_length, "pref_sum_we_up");
     prefix_sum_up.compile();
 
     ocl::Kernel prefix_sum_down(prefix_sum_kernel, prefix_sum_kernel_length, "pref_sum_we_down");
     prefix_sum_down.compile();
 
-    gpu::gpu_mem_32u as_gpu;
-    gpu::gpu_mem_32u bs_gpu;
-
-	for (unsigned int n = 8; n <= max_n; n *= 4) {
+	for (unsigned int n = 4096; n <= max_n; n *= 4) {
 		std::cout << "______________________________________________" << std::endl;
 		unsigned int values_range = std::min<unsigned int>(1023, std::numeric_limits<int>::max() / n);
 		std::cout << "n=" << n << " values in range: [" << 0 << "; " << values_range << "]" << std::endl;
@@ -106,15 +104,8 @@ int main(int argc, char **argv)
         {
             std::vector<unsigned int> res(n);
 
-            std::cout << "initially" << std::endl;
-            for (const auto& el: as) {
-                std::cout << el << " ";
-            }
-            std::cout << std::endl;
-
             timer t;
             for (int iter = 0; iter < benchmarkingIters; ++iter) {
-                std::cout << "writing data " << std::endl;
                 as_gpu.writeN(as.data(), n);
                 bs_gpu.writeN(as.data(), n);
 
@@ -122,31 +113,15 @@ int main(int argc, char **argv)
 
                 int d = 1;
                 for (; (1 << d) <= n; d++) {
-                    prefix_sum_up.exec(gpu::WorkSize(8, n >> d), as_gpu, bs_gpu, d, n);
-                    std::swap(as_gpu, bs_gpu);
-                }
-
-                bs_gpu.readN(res.data(), n);
-
-                std::cout << "after up" << std::endl;
-                for (const auto& el: res) {
-                    std::cout << el << " ";
-                }
-                std::cout << std::endl;
-
-                d -= 1;
-                for (; d > 0; d--) {
-                    prefix_sum_down.exec(gpu::WorkSize(8, n >> d), as_gpu, bs_gpu, d, n);
-                    std::swap(as_gpu, bs_gpu);
+                    prefix_sum_up.exec(gpu::WorkSize(128, n >> d), as_gpu, bs_gpu, d, n);
                 }
 
                 as_gpu.readN(res.data(), n);
 
-                std::cout << "after down" << std::endl;
-                for (const auto& el: res) {
-                    std::cout << el << " ";
+                d -= 1;
+                for (; d > 0; d--) {
+                    prefix_sum_down.exec(gpu::WorkSize(128, n >> d), as_gpu, bs_gpu, d, n);
                 }
-                std::cout << std::endl;
 
                 t.nextLap();
             }
