@@ -748,4 +748,5 @@ template OpenCLKernelArg::OpenCLKernelArg(const gpu::shared_device_buffer_typed<
 template OpenCLKernelArg::OpenCLKernelArg(const gpu::shared_device_buffer_typed<int> &arg);
 template OpenCLKernelArg::OpenCLKernelArg(const gpu::shared_device_buffer_typed<unsigned int> &arg);
 template OpenCLKernelArg::OpenCLKernelArg(const gpu::shared_device_buffer_typed<float> &arg);
+template OpenCLKernelArg::OpenCLKernelArg(const gpu::shared_device_buffer_typed<uint64_t> &arg);
 template OpenCLKernelArg::OpenCLKernelArg(const gpu::shared_device_buffer_typed<double> &arg);

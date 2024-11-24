@@ -71,3 +71,24 @@ gpu::Device gpu::chooseGPUDevice(int argc, char **argv)
 	}
 	return devices[device_index];
 }
+
+gpu::Device gpu::chooseGPUDevice(int device_index)
+{
+    std::vector <gpu::Device> devices = gpu::enumDevices();
+
+    if (devices.size() == 0) {
+        throw std::runtime_error("No OpenCL devices found");
+    } else {
+        std::cout << "OpenCL devices:" << std::endl;
+        for (int i = 0; i < devices.size(); ++i) {
+            std::cout << "  Device #" << i << ": ";
+            gpu::printDeviceInfo(devices[i]);
+        }
+        if (device_index >= (int) devices.size()) {
+            throw std::runtime_error("Illegal device index");
+        }
+        std::cout << "Using device #" << device_index << ": ";
+        gpu::printDeviceInfo(devices[device_index]);
+    }
+    return devices[device_index];
+}
