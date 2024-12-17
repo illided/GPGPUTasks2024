@@ -3,14 +3,11 @@
 #include <libutils/fast_random.h>
 #include <libutils/misc.h>
 #include <libutils/timer.h>
-#include <bitset>
 
 // Этот файл будет сгенерирован автоматически в момент сборки - см. convertIntoHeader в CMakeLists.txt:18
 #include "cl/radix_cl.h"
-#include "libgpu/work_size.h"
 
 #include <iostream>
-#include <ostream>
 #include <stdexcept>
 #include <vector>
 
